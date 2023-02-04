@@ -1,6 +1,5 @@
 module main
 
-import v.ast
 import v.reflection
 
 struct ParamGen {
@@ -18,8 +17,8 @@ fn (mut p ParamGen) next() ?string {
 	}
 }
 
-fn (mut p ParamGen) gen(mod_name string, typ ast.Type) []string {
-	match typ.idx() {
+fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
+	match arg.typ.idx() {
 		typeof[isize]().idx, typeof[u8]().idx, typeof[u16]().idx, typeof[u32]().idx,
 		typeof[u64]().idx, typeof[i16]().idx, typeof[i32]().idx, typeof[i64]().idx,
 		typeof[int]().idx {
@@ -46,10 +45,16 @@ fn (mut p ParamGen) gen(mod_name string, typ ast.Type) []string {
 		typeof[[]voidptr]().idx, typeof[voidptr]().idx {
 			return ['voidptr(0)']
 		}
+		typeof[map[string]int]().idx {
+			return ['{"a": 1}']
+		}
 		else {
-			type_name := reflection.type_name(typ)
+			type_name := reflection.type_name(arg.typ.idx())
 			return if type_name.starts_with('fn (') {
-				['${type_name.replace('T,', '_,').replace('T)', '_)')} {}']
+				[
+					'${type_name.replace('(string)', '(_)').replace('(int)', '(_)').replace('(T)',
+						'(_)')} {}',
+				]
 			} else if type_name == 'T' {
 				['0']
 			} else if type_name == '[]T' {
@@ -57,17 +62,18 @@ fn (mut p ParamGen) gen(mod_name string, typ ast.Type) []string {
 			} else if type_name == '[][]T' {
 				['[][]int{len:10}']
 			} else {
+				out := if arg.is_mut { 'mut ' } else { '' }
 				if type_name == 'Builder' {
-					['strings.Builder{}']
+					['${out}strings.Builder{}']
 				} else {
 					mod := if mod_name in ['builtin', ''] { '' } else { '${mod_name}.' }
 					if type_name.starts_with('[]') {
 						[
-							type_name.all_before_last(']') +
+							out + type_name.all_before_last(']') +
 								']${mod}${type_name.replace('[]', '')}{}',
 						]
 					} else {
-						['${mod}${type_name}{}']
+						['${out}${mod}${type_name}{}']
 					}
 				}
 			}
@@ -77,13 +83,11 @@ fn (mut p ParamGen) gen(mod_name string, typ ast.Type) []string {
 
 fn (mut p ParamGen) init(func reflection.Function) {
 	p.idx = 0
-	arg_types := func.args.map(it.typ)
-
 	p.inputs = []string{}
 	for {
 		mut args := []string{}
-		for typ in arg_types {
-			args << p.gen(func.mod_name.all_after_last('.'), typ.idx()).first()
+		for arg in func.args {
+			args << p.gen(func.mod_name.all_after_last('.'), arg).first()
 		}
 		p.inputs << args.join(', ')
 		break

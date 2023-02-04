@@ -34,6 +34,10 @@ fn fuzzer_funcs() {
 			continue
 		}
 
+		if os.args.len > 1 && os.args[1] != '${func.mod_name}_${func.name}' {
+			continue
+		}
+
 		mut out := 'module main\n'
 
 		if func.mod_name !in ['', 'builtin'] {
@@ -56,11 +60,17 @@ fn fuzzer_funcs() {
 			out += '}\n\tassert true\n'
 			out += '}\n\n'
 		}
-		os.write_file('./tests/${func.name}_${i}_test.v', out) or { panic(err) }
+		if '-p' in os.args {
+			println(out)
+		} else {
+			os.write_file('./tests/${func.mod_name}_${func.name}_test.v', out) or { panic(err) }
+		}
 		count++
 	}
 
-	println('${count} tests generated')
+	if '-p' !in os.args {
+		println('${count} tests generated')
+	}
 }
 
 fn main() {
