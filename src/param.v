@@ -4,8 +4,10 @@ import v.reflection
 
 struct ParamGen {
 mut:
-	idx    int
-	inputs []string
+	idx      int
+	inputs   []string
+	tmp_vars string
+	current  string
 }
 
 fn (mut p ParamGen) next() ?string {
@@ -62,7 +64,7 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			} else if type_name == '[][]T' {
 				['[][]int{len:10}']
 			} else {
-				out := if arg.is_mut { 'mut ' } else { '' }
+				out := if !arg.typ.is_ptr() && arg.is_mut { 'mut ' } else { '' }
 				if type_name == 'Builder' {
 					['${out}strings.Builder{}']
 				} else {
@@ -86,8 +88,16 @@ fn (mut p ParamGen) init(func reflection.Function) {
 	p.inputs = []string{}
 	for {
 		mut args := []string{}
-		for arg in func.args {
-			args << p.gen(func.mod_name.all_after_last('.'), arg).first()
+		p.tmp_vars = ''
+		for k, arg in func.args {
+			arg_val := p.gen(func.mod_name.all_after_last('.'), arg).first()
+			if arg.typ.is_ptr() {
+				tmp_var := 't${k}'
+				p.tmp_vars += '\tmut ${tmp_var} := ${arg_val}\n'
+				args << if arg.is_mut { 'mut ${tmp_var}' } else { tmp_var }
+			} else {
+				args << arg_val
+			}
 		}
 		p.inputs << args.join(', ')
 		break

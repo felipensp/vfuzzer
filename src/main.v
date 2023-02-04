@@ -51,6 +51,7 @@ fn fuzzer_funcs() {
 		for k, param in p_gen {
 			func_test_name := '${i}_${k}'
 			out += '\nfn test_${func_test_name}() {\n'
+			out += p_gen.tmp_vars
 			out += '\tunsafe { ${fn_name}(${param})'
 			if func.return_typ.has_flag(.option) {
 				out += '?'

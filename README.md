@@ -11,16 +11,16 @@ V language fuzzing tool
 
 > Generating specific func test and printing it out
 
-`$ ./vfuzzer strconv_format_fl_old -p`
+`$ ./vfuzzer builtin_copy -p`
 ```V
 module main
-import strconv
-import strings
 
-fn test_223_0() {
-        unsafe { strconv.format_fl_old(1.12345, strconv.BF_param{})}
+fn test_6_0() {
+        mut t0 := []u8{}
+        unsafe { copy(mut t0, []u8{})}
         assert true
 }
+
 ```
 
 > Saving generated test to file
