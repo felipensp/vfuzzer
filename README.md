@@ -6,7 +6,7 @@ V language fuzzing tool
 
 > Generating all tests on ./tests dir
 
-`v . && ./vfuzzer && v test tests/`
+`$ v . && ./vfuzzer && v test tests/`
 
 
 > Generating specific func test and printing it out
