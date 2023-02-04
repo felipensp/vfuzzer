@@ -2,4 +2,4 @@
 V language fuzzing tool
 
 
-`v . && ./vfuzzer > fuzzing_test.v && v -stats test .`
+`v . && ./vfuzzer && v test tests/`
