@@ -4,13 +4,12 @@ V language fuzzing tool
 
 ### Usage
 
-#### Genearting all tests
+> Generating all tests on ./tests dir
 
 `v . && ./vfuzzer && v test tests/`
 
-> Generates all tests on ./tests dir
 
-### Generating specific func test
+> Generating specific func test and printing it out
 
 ```
 $ ./vfuzzer strconv_format_fl_old -p
@@ -24,9 +23,11 @@ fn test_223_0() {
 }
 ```
 
+> Saving generated test to file
+
 `$ ./vfuzzer strconv_format_fl_old -p > a_test.v`
 
-#### Running test
+> Running test with vtest
 
 ```
 $ v test a_test.v
