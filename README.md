@@ -11,8 +11,8 @@ V language fuzzing tool
 
 > Generating specific func test and printing it out
 
+`$ ./vfuzzer strconv_format_fl_old -p`
 ```V
-$ ./vfuzzer strconv_format_fl_old -p
 module main
 import strconv
 import strings
