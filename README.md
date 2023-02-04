@@ -4,7 +4,7 @@ V language fuzzing tool
 
 ### Usage
 
-> Generating all tests on ./tests dir
+> Generating all tests on ./tests dir and running vtest on them
 
 `$ v . && ./vfuzzer && v test tests/`
 
