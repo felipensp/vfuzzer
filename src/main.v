@@ -20,7 +20,7 @@ fn fuzzer_funcs() {
 		'panic_option_not_set', 'panic_result_not_set', 'panic', 'execute_or_exit',
 		'execute_or_panic']
 	deprecated := ['utf8_str_len', 'is_writable_folder']
-	known_problems := ['read_file_array']
+	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line']
 	mut count := 0
 
 	for i, func in funcs {
@@ -52,11 +52,13 @@ fn fuzzer_funcs() {
 			func_test_name := '${i}_${k}'
 			out += '\nfn test_${func_test_name}() {\n'
 			out += p_gen.tmp_vars
-			out += '\tunsafe { ${fn_name}(${param})'
-			if func.return_typ.has_flag(.option) {
-				out += '?'
+			out += '\tunsafe {${fn_name}(${param})'
+			out += if func.return_typ.has_flag(.option) {
+				'?'
 			} else if func.return_typ.has_flag(.result) {
-				out += '!'
+				'!'
+			} else {
+				''
 			}
 			out += '}\n\tassert true\n'
 			out += '}\n\n'

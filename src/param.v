@@ -26,6 +26,9 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 		typeof[int]().idx {
 			return ['0', '1', '2']
 		}
+		typeof[[]int]().idx, typeof[[]u8]().idx {
+			return ['${reflection.type_name(arg.typ.idx())}{len:10}']
+		}
 		typeof[[]string]().idx {
 			return ['["a"]']
 		}
@@ -53,9 +56,23 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 		else {
 			type_name := reflection.type_name(arg.typ.idx())
 			return if type_name.starts_with('fn (') {
+				params := type_name.all_after_last('(').all_before_last(')').split(',')
+				arg_params := if params.len > 1 {
+					'_, ' + params[1..].map('${it.to_lower()}_ int').join(',')
+				} else {
+					''
+				}
+				ret_type := type_name.all_after_last(')').trim_space().replace('R', 'int').replace('T',
+					'int')
+				ret_value := if ret_type == 'bool' {
+					'true'
+				} else if ret_type == 'int' {
+					'0'
+				} else {
+					'${ret_type}{}'
+				}
 				[
-					'${type_name.replace('(string)', '(_)').replace('(int)', '(_)').replace('(T)',
-						'(_)')} {}',
+					'fn (${arg_params}) ${ret_type} { return ${ret_value} }',
 				]
 			} else if type_name == 'T' {
 				['0']
@@ -93,7 +110,11 @@ fn (mut p ParamGen) init(func reflection.Function) {
 			arg_val := p.gen(func.mod_name.all_after_last('.'), arg).first()
 			if arg.typ.is_ptr() {
 				tmp_var := 't${k}'
-				p.tmp_vars += '\tmut ${tmp_var} := ${arg_val}\n'
+				if arg_val.ends_with('{}') || arg_val.starts_with('[]') {
+					p.tmp_vars += '\tmut ${tmp_var} := ${arg_val}\n' // no cast
+				} else {
+					p.tmp_vars += '\tmut ${tmp_var} := ${reflection.type_name(arg.typ.idx())}(${arg_val})\n' // with cast
+				}
 				args << if arg.is_mut { 'mut ${tmp_var}' } else { tmp_var }
 			} else {
 				args << arg_val
