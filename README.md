@@ -8,10 +8,13 @@ V language fuzzing tool
 
 `$ v . && ./vfuzzer && v test tests/`
 
+> Generating specific module tests
+
+`$ ./vfuzzer -m os.cmdline os`
 
 > Generating specific func test and printing it out
 
-`$ ./vfuzzer builtin_copy -p`
+`$ ./vfuzzer -p builtin_copy`
 ```V
 module main
 
