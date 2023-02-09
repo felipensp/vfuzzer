@@ -1,5 +1,6 @@
 module main
 
+import os.cmdline
 import os
 import v.reflection
 
@@ -9,6 +10,37 @@ fn gen_func_name(func reflection.Function) string {
 	} else {
 		'${func.name}'
 	}
+}
+
+fn case_01(func reflection.Function, fname string, params string, p_gen ParamGen) string {
+	mut modifier := if func.return_typ.has_flag(.option) {
+		'?'
+	} else if func.return_typ.has_flag(.result) {
+		'!'
+	} else {
+		''
+	}
+	mut out := ''
+	out += p_gen.tmp_vars
+	out += '\tunsafe {${fname}(${params})${modifier}'
+	out += '}\n\tassert true\n'
+	return out
+}
+
+fn case_02(func reflection.Function, fname string, params string, p_gen ParamGen) string {
+	mut modifier := if func.return_typ.has_flag(.option) {
+		'?'
+	} else if func.return_typ.has_flag(.result) {
+		'!'
+	} else {
+		''
+	}
+	mut out := ''
+	out += '\tmut func := fn () ${modifier}bool {\n\t'
+	out += p_gen.tmp_vars
+	out += '\tunsafe {${fname}(${params})${modifier}'
+	out += '}\n\t\treturn true\n\t}\n\tassert func()${modifier}\n'
+	return out
 }
 
 fn fuzzer_funcs() {
@@ -23,6 +55,9 @@ fn fuzzer_funcs() {
 	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line']
 	mut count := 0
 
+	mod_arg := cmdline.options_after(os.args, ['-m'])
+	func_arg := cmdline.options_after(os.args, ['-p'])
+
 	for i, func in funcs {
 		if !func.is_pub || func.name in ignore_funcs || func.name in deprecated
 			|| func.name in known_problems || func.receiver_typ != 0 {
@@ -34,7 +69,11 @@ fn fuzzer_funcs() {
 			continue
 		}
 
-		if os.args.len > 1 && os.args[1] != '${func.mod_name}_${func.name}' {
+		if mod_arg.len != 0 && func.mod_name !in mod_arg {
+			continue
+		}
+
+		if func_arg.len != 0 && '${func.mod_name}_${func.name}' !in func_arg {
 			continue
 		}
 
@@ -50,18 +89,12 @@ fn fuzzer_funcs() {
 		p_gen.init(func)
 		for k, param in p_gen {
 			func_test_name := '${i}_${k}'
-			out += '\nfn test_${func_test_name}() {\n'
-			out += p_gen.tmp_vars
-			out += '\tunsafe {${fn_name}(${param})'
-			out += if func.return_typ.has_flag(.option) {
-				'?'
-			} else if func.return_typ.has_flag(.result) {
-				'!'
-			} else {
-				''
-			}
-			out += '}\n\tassert true\n'
-			out += '}\n\n'
+			out += '\nfn test_${func_test_name}_simple() {\n'
+			out += case_01(func, fn_name, param, p_gen)
+			out += '}\n'
+			out += '\nfn test_${func_test_name}_anon() {\n'
+			out += case_02(func, fn_name, param, p_gen)
+			out += '}\n'
 		}
 		if '-p' in os.args {
 			println(out)
