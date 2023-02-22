@@ -1,5 +1,6 @@
 module main
 
+import rand
 import v.reflection
 
 struct ParamGen {
@@ -21,22 +22,24 @@ fn (mut p ParamGen) next() ?string {
 
 fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 	match arg.typ.idx() {
-		typeof[isize]().idx, typeof[u8]().idx, typeof[u16]().idx, typeof[u32]().idx,
-		typeof[u64]().idx, typeof[i16]().idx, typeof[i32]().idx, typeof[i64]().idx,
+		typeof[isize]().idx, typeof[i16]().idx, typeof[i32]().idx, typeof[i64]().idx,
 		typeof[int]().idx {
-			return ['0', '1', '2']
+			return ['-1', '0', int(0x7FFFFFFF).str(), int(0x80000000 - 1).str()]
+		}
+		typeof[u8]().idx, typeof[u16]().idx, typeof[u32]().idx, typeof[u64]().idx {
+			return ['0', int(0x80000000 - 1).str()]
 		}
 		typeof[[]int]().idx, typeof[[]u8]().idx {
-			return ['${reflection.type_name(arg.typ.idx())}{len:10}']
+			return ['${reflection.type_name(arg.typ.idx())}{len:3}']
 		}
 		typeof[[]string]().idx {
-			return ['["a"]']
+			return ['["a", ""]']
 		}
 		typeof[string]().idx {
-			return ['"a"', '"b"', '"c"']
+			return ['"a"']
 		}
 		typeof[rune]().idx {
-			return ['`a`']
+			return ['`a`, ``, `\0`']
 		}
 		typeof[f32]().idx, typeof[f64]().idx {
 			return ['1.12345']
@@ -45,13 +48,13 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			return ['true', 'false']
 		}
 		typeof[byte]().idx, typeof[char]().idx {
-			return ['0xff']
+			return ['0xff', '0x00']
 		}
 		typeof[[]voidptr]().idx, typeof[voidptr]().idx {
-			return ['voidptr(0)']
+			return ['voidptr(0)', 'voidptr(-1)']
 		}
 		typeof[map[string]int]().idx {
-			return ['{"a": 1}']
+			return ['{"a": 1}', '{"": 0}']
 		}
 		else {
 			type_name := reflection.type_name(arg.typ.idx())
@@ -107,7 +110,8 @@ fn (mut p ParamGen) init(func reflection.Function) {
 		mut args := []string{}
 		p.tmp_vars = ''
 		for k, arg in func.args {
-			arg_val := p.gen(func.mod_name.all_after_last('.'), arg).first()
+			p_args := p.gen(func.mod_name.all_after_last('.'), arg)
+			arg_val := rand.element(p_args) or { panic(err) }
 			if arg.typ.is_ptr() {
 				tmp_var := 't${k}'
 				if arg_val.ends_with('{}') || arg_val.starts_with('[]') {

@@ -43,6 +43,22 @@ fn case_02(func reflection.Function, fname string, params string, p_gen ParamGen
 	return out
 }
 
+fn case_03(func reflection.Function, fname string, params string, p_gen ParamGen) string {
+	mut modifier := if func.return_typ.has_flag(.option) {
+		'?'
+	} else if func.return_typ.has_flag(.result) {
+		'!'
+	} else {
+		''
+	}
+	mut out := ''
+	out += '\tmut func := spawn fn () ${modifier}bool {\n\t'
+	out += p_gen.tmp_vars
+	out += '\t\tunsafe {${fname}(${params})${modifier}}\n'
+	out += '\t\treturn true\n\t}()\n\tassert func.wait()${modifier}\n'
+	return out
+}
+
 fn fuzzer_funcs() {
 	funcs := reflection.get_funcs()
 
@@ -94,6 +110,9 @@ fn fuzzer_funcs() {
 			out += '}\n'
 			out += '\nfn test_${func_test_name}_anon() {\n'
 			out += case_02(func, fn_name, param, p_gen)
+			out += '}\n'
+			out += '\nfn test_${func_test_name}_spawn() {\n'
+			out += case_03(func, fn_name, param, p_gen)
 			out += '}\n'
 		}
 		if '-p' in os.args {
