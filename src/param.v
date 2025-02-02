@@ -20,20 +20,39 @@ fn (mut p ParamGen) next() ?string {
 	}
 }
 
+fn (mut p ParamGen) param_type(_param string) string {
+	mut param := _param.trim_left(' ')
+	if param.len == 1 {
+		return 'int'
+	}
+	return param
+}
+
 fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 	match arg.typ.idx() {
-		typeof[isize]().idx, typeof[i16]().idx, typeof[i32]().idx, typeof[i64]().idx,
-		typeof[int]().idx {
+		typeof[isize]().idx,  typeof[i64]().idx, typeof[int]().idx {
 			return ['-1', '0', int(0x7FFFFFFF).str(), int(0x80000000 - 1).str()]
 		}
-		typeof[u8]().idx, typeof[u16]().idx, typeof[u32]().idx, typeof[u64]().idx {
+		typeof[u8]().idx {
+			return ['0', '255']
+		}
+		typeof[u16]().idx {
+			return ['0', '32767']	
+		}
+		typeof[i16]().idx{
+			return ['0', '65536']
+		} 
+		typeof[u32]().idx, typeof[i32]().idx {
+			return ['0', '2147483647']
+		}
+		typeof[u64]().idx {
 			return ['0', int(0x80000000 - 1).str()]
 		}
 		typeof[[]int]().idx, typeof[[]u8]().idx {
 			return ['${reflection.type_name(arg.typ.idx())}{len:3}']
 		}
 		typeof[[]string]().idx {
-			return ['["a", ""]', '...["a", ""]']
+			return ['["a", ""]']
 		}
 		typeof[string]().idx {
 			return ['"a"', '""']
@@ -60,8 +79,8 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			type_name := reflection.type_name(arg.typ.idx())
 			return if type_name.starts_with('fn (') {
 				params := type_name.all_after_last('(').all_before_last(')').split(',')
-				arg_params := if params.len > 1 {
-					'_, ' + params[1..].map('${it.to_lower()}_ int').join(',')
+				arg_params := if params.len >= 1 {
+					p.gen_closure_args(params)
 				} else {
 					''
 				}
@@ -71,6 +90,10 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 					'true'
 				} else if ret_type == 'int' {
 					'0'
+				} else if ret_type == '' {
+					''
+				} else if ret_type == 'string' {
+					'""'
 				} else {
 					'${ret_type}{}'
 				}
@@ -101,6 +124,17 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			}
 		}
 	}
+}
+
+fn (mut p ParamGen) gen_closure_args(params []string) string {
+	mut s := ''
+	for k, param in params {
+		s += '_${param.trim_left(' ').to_lower()}${k} ${p.param_type(param)}'
+		if k != params.len - 1 {
+			s += ', '
+		}
+	}
+	return s
 }
 
 fn (mut p ParamGen) init(func reflection.Function) {
