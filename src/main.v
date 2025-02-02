@@ -65,11 +65,15 @@ fn fuzzer_funcs() {
 	mut p_gen := ParamGen{}
 
 	ignore_funcs := ['bool', 'int', 'i64', 'i8', 'u8', 'u16', 'u32', 'u64', 'i16', 'f32', 'f64',
-		'panic_option_not_set', 'panic_result_not_set', 'panic', 'panic_n', 'panic_n2', 'execute_or_exit',
-		'execute_or_panic', 'panic_lasterr', 'execvp', 'execve', 'execute', 'execute_opt', 'panic_error_number']
+		'panic_option_not_set', 'panic_result_not_set', 'panic', 'panic_n', 'panic_n2',
+		'execute_or_exit', 'execute_or_panic', 'panic_lasterr', 'execvp', 'execve', 'execute',
+		'execute_opt', 'panic_error_number']
 	deprecated := ['utf8_str_len', 'is_writable_folder']
-	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line', 'input_password', 'fd_read']
-	memory_funs := ['malloc', 'realloc_data', 'memdup', 'memdup_uncollectable', 'memdup_noscan', 'malloc_noscan', 'fileno', 'vcalloc', 'vrealloc', 'v_realloc', 'vmemcpy', 'vmemset', 'vmemmove']
+	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line',
+		'input_password', 'fd_read']
+	memory_funs := ['malloc', 'realloc_data', 'memdup', 'memdup_uncollectable', 'memdup_noscan',
+		'malloc_noscan', 'fileno', 'vcalloc', 'vrealloc', 'v_realloc', 'vmemcpy', 'vmemset',
+		'vmemmove', 'vmemcmp']
 	mut count := 0
 
 	mod_arg := cmdline.options_after(os.args, ['-m'])
@@ -77,7 +81,7 @@ fn fuzzer_funcs() {
 
 	for i, func in funcs {
 		if !func.is_pub || func.name in ignore_funcs || func.name in deprecated
-			|| func.name in known_problems || func.receiver_typ != 0 || func.name in memory_funs{
+			|| func.name in known_problems || func.receiver_typ != 0 || func.name in memory_funs {
 			continue
 		}
 

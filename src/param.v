@@ -30,18 +30,18 @@ fn (mut p ParamGen) param_type(_param string) string {
 
 fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 	match arg.typ.idx() {
-		typeof[isize]().idx,  typeof[i64]().idx, typeof[int]().idx {
+		typeof[isize]().idx, typeof[i64]().idx, typeof[int]().idx {
 			return ['-1', '0', int(0x7FFFFFFF).str(), int(0x80000000 - 1).str()]
 		}
 		typeof[u8]().idx {
 			return ['0', '255']
 		}
 		typeof[u16]().idx {
-			return ['0', '32767']	
+			return ['0', '32767']
 		}
-		typeof[i16]().idx{
+		typeof[i16]().idx {
 			return ['0', '65536']
-		} 
+		}
 		typeof[u32]().idx, typeof[i32]().idx {
 			return ['0', '2147483647']
 		}
