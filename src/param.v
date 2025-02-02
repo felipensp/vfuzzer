@@ -29,33 +29,38 @@ fn (mut p ParamGen) param_type(_param string) string {
 }
 
 fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
+	is_variadic := arg.typ.has_flag(.variadic)
 	match arg.typ.idx() {
 		typeof[isize]().idx, typeof[i64]().idx, typeof[int]().idx {
-			return ['-1', '0', int(0x7FFFFFFF).str(), int(0x80000000 - 1).str()]
+			return ['-1', '0', 'arr_int[0]']
 		}
 		typeof[u8]().idx {
-			return ['0', '255']
+			return ['0', '255', 'arr_uint[0]']
 		}
 		typeof[u16]().idx {
-			return ['0', '32767']
+			return ['0', '32767', 'arr_uint[0]']
 		}
 		typeof[i16]().idx {
-			return ['0', '65536']
+			return ['0', '65536', 'arr_int[0]']
 		}
 		typeof[u32]().idx, typeof[i32]().idx {
-			return ['0', '2147483647']
+			return ['0', '1', 'arr_uint[0]']
 		}
 		typeof[u64]().idx {
-			return ['0', int(0x80000000 - 1).str()]
+			return ['0', '1', 'arr_uint[0]']
 		}
 		typeof[[]int]().idx, typeof[[]u8]().idx {
 			return ['${reflection.type_name(arg.typ.idx())}{len:3}']
 		}
 		typeof[[]string]().idx {
-			return ['["a", ""]']
+			return if is_variadic {
+				['"a", "", "%p%n"']
+			} else {
+				['["a", "", "%p%n"]']
+			}
 		}
 		typeof[string]().idx {
-			return ['"a"', '""']
+			return ['"a"', '""', '"%p%n"']
 		}
 		typeof[rune]().idx {
 			return ['`a`, ``, `\0`']
@@ -84,8 +89,8 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 				} else {
 					''
 				}
-				ret_type := type_name.all_after_last(')').trim_space().replace('R', 'int').replace('T',
-					'int')
+				ret_type := type_name.all_after_last(')').trim_space().replace('K', 'int').replace('R',
+					'int').replace('T', 'int')
 				ret_value := if ret_type == 'bool' {
 					'true'
 				} else if ret_type == 'int' {
@@ -100,12 +105,16 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 				[
 					'fn (${arg_params}) ${ret_type} { return ${ret_value} }',
 				]
-			} else if type_name == 'T' {
+			} else if type_name.len == 1 { // T
 				['0']
-			} else if type_name == '[]T' {
+			} else if type_name.starts_with('[]') && type_name.len == 3 { // []T
 				['[]int{len:10}']
-			} else if type_name == '[][]T' {
-				['[][]int{len:10}']
+			} else if type_name.starts_with('[][]') && type_name.len == 5 { // [][]T
+				if is_variadic {
+					['[[0]], [[0]]']
+				} else {
+					['[][]int{len:10}']
+				}
 			} else {
 				out := if !arg.typ.is_ptr() && arg.is_mut { 'mut ' } else { '' }
 				if type_name == 'Builder' {
