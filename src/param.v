@@ -33,7 +33,7 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			return ['${reflection.type_name(arg.typ.idx())}{len:3}']
 		}
 		typeof[[]string]().idx {
-			return ['["a", ""]']
+			return ['["a", ""]', '...["a", ""]']
 		}
 		typeof[string]().idx {
 			return ['"a"']

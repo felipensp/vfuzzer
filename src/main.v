@@ -68,7 +68,7 @@ fn fuzzer_funcs() {
 		'panic_option_not_set', 'panic_result_not_set', 'panic', 'execute_or_exit',
 		'execute_or_panic']
 	deprecated := ['utf8_str_len', 'is_writable_folder']
-	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line']
+	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line', 'input_password']
 	mut count := 0
 
 	mod_arg := cmdline.options_after(os.args, ['-m'])
