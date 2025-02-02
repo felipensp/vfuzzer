@@ -65,7 +65,7 @@ fn fuzzer_funcs() {
 	mut p_gen := ParamGen{}
 
 	ignore_funcs := ['bool', 'int', 'i64', 'i8', 'u8', 'u16', 'u32', 'u64', 'i16', 'f32', 'f64',
-		'panic_option_not_set', 'panic_result_not_set', 'panic', 'execute_or_exit',
+		'panic_option_not_set', 'panic_result_not_set', 'panic', 'panic_n', 'execute_or_exit',
 		'execute_or_panic']
 	deprecated := ['utf8_str_len', 'is_writable_folder']
 	known_problems := ['read_file_array', 'get_lines', 'get_raw_line', 'get_lines_joined', 'get_line', 'input_password']

@@ -36,7 +36,7 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			return ['["a", ""]', '...["a", ""]']
 		}
 		typeof[string]().idx {
-			return ['"a"']
+			return ['"a"', '""']
 		}
 		typeof[rune]().idx {
 			return ['`a`, ``, `\0`']
@@ -51,7 +51,7 @@ fn (mut p ParamGen) gen(mod_name string, arg reflection.FunctionArg) []string {
 			return ['0xff', '0x00']
 		}
 		typeof[[]voidptr]().idx, typeof[voidptr]().idx {
-			return ['voidptr(0)', 'voidptr(-1)']
+			return ['voidptr(0)', 'voidptr(-1)', 'c"foobar"']
 		}
 		typeof[map[string]int]().idx {
 			return ['{"a": 1}', '{"": 0}']
